@@ -4,10 +4,19 @@ import { ProductFormData } from "@/lib/validations/product-schema";
 
 interface HealthStatusProps {
   product: ProductFormData;
+  errors?: Record<string, string>;
+  onUpdate?: (updates: Partial<ProductFormData>) => void;
 }
 
-export const HealthStatus = ({ product }: HealthStatusProps) => {
+export const HealthStatus = ({ product, errors = {}, onUpdate }: HealthStatusProps) => {
   const { language } = useLanguage();
+
+  // Helper function to get error with proper styling
+  const getErrorClass = (fieldName: string) => {
+    return errors[fieldName]
+      ? "border-red-500 focus:ring-red-500"
+      : "border-gray-300 focus:ring-green-500";
+  };
 
   const t = {
     health: { en: "Health", ar: "حالة المنتج" },
@@ -27,6 +36,11 @@ export const HealthStatus = ({ product }: HealthStatusProps) => {
     product: { en: "Product Active", ar: "المنتج نشط" },
     notProduct: { en: "Product not active", ar: "المنتج غير نشط" },
     learnMore: { en: "Learn more", ar: "اعرف المزيد" },
+    productTitle: { en: "Product Title", ar: "عنوان المنتج" },
+    productTitleEn: { en: "Product Title (English)", ar: "عنوان المنتج (الإنجليزية)" },
+    productTitleAr: { en: "Product Title (Arabic)", ar: "عنوان المنتج (العربية)" },
+    enterProductTitleEn: { en: "Enter product title in English", ar: "أدخل عنوان المنتج باللغة الإنجليزية" },
+    enterProductTitleAr: { en: "Enter product title in Arabic", ar: "أدخل عنوان المنتج باللغة العربية" },
   };
 
   const checks = {
@@ -40,8 +54,85 @@ export const HealthStatus = ({ product }: HealthStatusProps) => {
   const allValid = Object.values(checks).every(Boolean);
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold">{t.health[language]}</h2>
+    <div className="space-y-6">
+      {/* Product Information Card */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
+        {/* SKU Display */}
+        <div className="mb-6 rounded-md border border-gray-200 p-3">
+          <div className="font-mono text-sm font-medium">{product.sku}</div>
+        </div>
+
+        {/* Product Title - Bilingual Fields */}
+        <h2 className="mb-4 text-xl font-semibold">{t.productTitle[language]}</h2>
+
+        {/* English Title */}
+        <div className="mb-4" data-field="title.en">
+          <label
+            htmlFor="titleEn"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            {t.productTitleEn[language]}
+          </label>
+          <input
+            type="text"
+            id="titleEn"
+            className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${getErrorClass("title.en")}`}
+            placeholder={t.enterProductTitleEn[language]}
+            value={product.title?.en || ""}
+            onChange={(e) => {
+              if (!onUpdate) return;
+              onUpdate({
+                title: {
+                  en: e.target.value,
+                  ar: product.title?.ar || "",
+                },
+              });
+            }}
+            dir="ltr"
+          />
+          {errors["title.en"] && (
+            <div className="mt-2 rounded-md text-xs text-red-600">
+              {errors["title.en"]}
+            </div>
+          )}
+        </div>
+
+        {/* Arabic Title */}
+        <div className="mb-6" data-field="title.ar">
+          <label
+            htmlFor="titleAr"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            {t.productTitleAr[language]}
+          </label>
+          <input
+            type="text"
+            id="titleAr"
+            className={`w-full rounded-md border p-3 focus:outline-none focus:ring-2 ${getErrorClass("title.ar")}`}
+            placeholder={t.enterProductTitleAr[language]}
+            value={product.title?.ar || ""}
+            onChange={(e) => {
+              if (!onUpdate) return;
+              onUpdate({
+                title: {
+                  en: product.title?.en || "",
+                  ar: e.target.value,
+                },
+              });
+            }}
+            dir="rtl"
+          />
+          {errors["title.ar"] && (
+            <div className="mt-2 rounded-md text-xs text-red-600">
+              {errors["title.ar"]}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Health Status Card */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 className="text-xl font-semibold">{t.health[language]}</h2>
 
       <div className="my-4">
         <div
@@ -77,6 +168,7 @@ export const HealthStatus = ({ product }: HealthStatusProps) => {
             />
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

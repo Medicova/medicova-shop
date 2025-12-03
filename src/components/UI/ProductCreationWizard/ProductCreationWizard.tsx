@@ -56,7 +56,11 @@ const ProductCreationWizard = () => {
               <DetailsStep {...commonProps} />
             </div>
             <div className="col-span-1 h-fit lg:col-span-3">
-              <HealthStatus product={product} />
+              <HealthStatus 
+                product={product} 
+                errors={errors}
+                onUpdate={updateProduct}
+              />
             </div>
           </div>
         );
