@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ImageIcon, X, Check, Percent, DollarSign, Calendar, GripVertical, Plus, Info, Image as ImageIconType, Search } from "lucide-react";
+import { ImageIcon, X, Check, Percent, DollarSign, Calendar, GripVertical, Plus, Info, Image as ImageIconType, Search, Star } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ProductFormData,
@@ -108,6 +108,9 @@ const translations = {
     chooseImage: "Choose image",
     orAddFromUrl: "or Add from URL",
     enterThumbnailUrl: "Enter thumbnail image URL",
+    setAsFeatured: "Set as Featured",
+    featuredImage: "Featured Image",
+    removeFeatured: "Remove Featured",
     relatedProducts: "Related products",
     crossSellingProducts: "Cross-selling products",
     searchProducts: "Search products",
@@ -191,6 +194,9 @@ const translations = {
     chooseImage: "اختر صورة",
     orAddFromUrl: "أو أضف من رابط",
     enterThumbnailUrl: "أدخل رابط صورة مصغرة",
+    setAsFeatured: "تعيين كصورة مميزة",
+    featuredImage: "الصورة المميزة",
+    removeFeatured: "إزالة الصورة المميزة",
     relatedProducts: "المنتجات ذات الصلة",
     crossSellingProducts: "منتجات البيع المتقاطع",
     searchProducts: "البحث عن المنتجات",
@@ -333,6 +339,27 @@ export const DetailsStep = ({
   const handleRemoveImage = (index: number) => {
     const updated = (product.images || []).filter((_, i) => i !== index);
     onUpdate({ images: updated });
+    // If removed image was featured, clear featured image
+    const featuredIndex = (product as Record<string, unknown>).featuredImageIndex as number | undefined;
+    if (featuredIndex === index) {
+      onUpdate({ featuredImageIndex: undefined } as Partial<ProductFormData>);
+    } else if (featuredIndex !== undefined && featuredIndex > index) {
+      // Adjust featured index if it was after the removed image
+      onUpdate({ featuredImageIndex: featuredIndex - 1 } as Partial<ProductFormData>);
+    }
+  };
+
+  // Featured image state
+  const featuredImageIndex = (product as Record<string, unknown>).featuredImageIndex as number | undefined;
+
+  const handleSetFeaturedImage = (index: number) => {
+    if (featuredImageIndex === index) {
+      // Remove featured if clicking on the same image
+      onUpdate({ featuredImageIndex: undefined } as Partial<ProductFormData>);
+    } else {
+      // Set as featured
+      onUpdate({ featuredImageIndex: index } as Partial<ProductFormData>);
+    }
   };
 
   // Video handlers
@@ -1453,28 +1480,63 @@ export const DetailsStep = ({
         </div>
       )}
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {(product.images || []).map((img, index) => (
-          <div
-            key={index}
-            className="group relative overflow-hidden rounded-lg border"
-          >
-            <Image
-              src={typeof img === "string" ? img : URL.createObjectURL(img)}
-              alt={`Product image ${index + 1}`}
-              width={200}
-              height={200}
-              className="h-32 w-full object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => handleRemoveImage(index)}
-              className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-80 hover:opacity-100"
-              title={t.remove}
+        {(product.images || []).map((img, index) => {
+          const isFeatured = featuredImageIndex === index;
+          return (
+            <div
+              key={index}
+              className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
+                isFeatured
+                  ? "border-green-500 ring-2 ring-green-300"
+                  : "border-gray-200 cursor-pointer hover:border-green-300"
+              }`}
+              onClick={() => handleSetFeaturedImage(index)}
             >
-              <X size={14} />
-            </button>
-          </div>
-        ))}
+              <Image
+                src={typeof img === "string" ? img : URL.createObjectURL(img)}
+                alt={`Product image ${index + 1}`}
+                width={200}
+                height={200}
+                className="h-32 w-full object-cover"
+              />
+              {/* Featured Badge */}
+              {isFeatured && (
+                <div className="absolute left-1 top-1 flex items-center gap-1 rounded-md bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                  <Star size={12} className="fill-white" />
+                  <span>{t.featuredImage}</span>
+                </div>
+              )}
+              {/* Remove Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveImage(index);
+                }}
+                className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-80 hover:opacity-100"
+                title={t.remove}
+              >
+                <X size={14} />
+              </button>
+              {/* Set as Featured Button (when not featured) */}
+              {!isFeatured && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-all group-hover:bg-opacity-40">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSetFeaturedImage(index);
+                    }}
+                    className="rounded-md bg-white px-3 py-1 text-xs font-medium text-gray-700 opacity-0 transition-opacity group-hover:opacity-100"
+                    title={t.setAsFeatured}
+                  >
+                    {t.setAsFeatured}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Video Modal */}
