@@ -1,5 +1,24 @@
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { callLoginApi } from "./loginApi";
+import { callRefreshTokenApi } from "./refreshApi";
+
+interface ApiLoginResponse {
+  status: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      firstName: string;
+      lastName: string;
+      language: string;
+    };
+  };
+  message: string;
+}
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -11,77 +30,121 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         try {
-          // In a real app, you would query your database here
-          // This is just a mock implementation
+          if (!credentials?.email || !credentials?.password) {
+            console.error("Missing credentials");
+            return null;
+          }
 
-          // User credentials
-          if (
-            credentials?.email === "user@medicova.com" &&
-            credentials?.password === "user123"
-          ) {
+          // Use the shared login API function
+          // This will use BASE_URL environment variable or fallback to the default API URL
+          console.log("Attempting login for email:", credentials.email);
+          
+          const data = await callLoginApi(credentials.email, credentials.password) as ApiLoginResponse;
+
+          if (data.status === "success" && data.data) {
+            const { user, accessToken, refreshToken } = data.data;
+
+            // Combine firstName and lastName for the name field
+            const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+            // Map API role to our userType
+            let role: "user" | "seller" | "admin" = "user";
+            if (user.role === "admin") {
+              role = "admin";
+            } else if (user.role === "seller" || user.role === "vendor") {
+              role = "seller";
+            }
+
+            console.log("Login successful for user:", user.email, "role:", role);
+
+            // Calculate token expiration (55 minutes from now)
+            const tokenIssuedAt = Math.floor(Date.now() / 1000); // Current time in seconds
+            const accessTokenExpires = tokenIssuedAt + 55 * 60; // 55 minutes in seconds
+
             return {
-              id: "1",
-              name: "Regular User",
-              email: "user@medicova.com",
-              role: "user",
-              image:
-                "https://img.freepik.com/premium-photo/female-entrepreneur-wearing-suit-white-background_1029679-97782.jpg",
-              phone: "01024243243",
+              id: user.id,
+              name: fullName,
+              email: user.email,
+              role: role,
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+              language: user.language,
+              accessTokenExpires: accessTokenExpires,
+              tokenIssuedAt: tokenIssuedAt,
             };
           }
 
-          // Seller credentials
-          if (
-            credentials?.email === "seller@medicova.com" &&
-            credentials?.password === "seller123"
-          ) {
-            return {
-              id: "2",
-              name: "Seller Account",
-              email: "seller@medicova.com",
-              role: "seller",
-              image:
-                "https://img.freepik.com/free-photo/young-beautiful-woman-looking-camera-trendy-girl-casual-summer-white-t-shirt-jeans-shorts-positive-female-shows-facial-emotions-funny-model-isolated-yellow_158538-15796.jpg?t=st=1756648911~exp=1756652511~hmac=d6a21ff899cc4ed8378cd493fa5a66ec94c6b0544472c0fe7d5088becdadcc67&w=1480",
-              phone: "01024243243",
-            };
-          }
-          // Admin credentials
-          if (
-            credentials?.email === "admin@medicova.com" &&
-            credentials?.password === "admin123"
-          ) {
-            return {
-              id: "3",
-              name: "admin Account",
-              email: "admin@medicova.com",
-              role: "admin",
-              image:
-                "https://img.freepik.com/free-photo/man-wearing-t-shirt-gesturing_23-2149393645.jpg",
-              phone: "01024243243",
-            };
-          }
-
+          console.error("Unexpected response format:", data);
           return null;
         } catch (error) {
           console.error("Authorize error:", error);
+          if (error instanceof Error) {
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+          }
           return null;
         }
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  // NEXTAUTH_URL is automatically used by NextAuth for callback URL generation
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.role = user.role; // Using 'role' instead of 'type' for better semantics
+        token.role = user.role;
+        // Store tokens in the token object
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        token.language = user.language;
+        // Store token expiration times
+        token.accessTokenExpires = user.accessTokenExpires;
+        token.tokenIssuedAt = user.tokenIssuedAt;
+        return token;
       }
+
+      // Check if token needs to be refreshed (after 55 minutes)
+      const now = Math.floor(Date.now() / 1000); // Current time in seconds
+      const tokenIssuedAt = token.tokenIssuedAt || 0;
+      const timeSinceIssued = now - tokenIssuedAt;
+      const refreshInterval = 55 * 60; // 55 minutes in seconds
+
+      // If token was issued more than 55 minutes ago, refresh it
+      if (timeSinceIssued >= refreshInterval && token.refreshToken && token.id) {
+        try {
+          console.log("Token expired, refreshing...");
+          const refreshData = await callRefreshTokenApi(token.refreshToken, token.id);
+
+          if (refreshData.status === "success" && refreshData.data) {
+            const { accessToken, refreshToken: newRefreshToken } = refreshData.data;
+
+            // Update tokens
+            token.accessToken = accessToken;
+            token.refreshToken = newRefreshToken;
+            
+            // Update expiration times
+            token.tokenIssuedAt = Math.floor(Date.now() / 1000);
+            token.accessTokenExpires = token.tokenIssuedAt + 55 * 60;
+
+            console.log("Token refreshed successfully");
+          } else {
+            console.error("Token refresh failed: Invalid response format");
+          }
+        } catch (error) {
+          console.error("Token refresh error:", error);
+          // If refresh fails, the token will be invalid and user will need to re-login
+          // You could also throw an error here to force re-authentication
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -90,6 +153,13 @@ export const authOptions: AuthOptions = {
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.role = token.role;
+        // Add tokens to session if needed
+        if (token.accessToken) {
+          (session as { accessToken?: string }).accessToken = token.accessToken;
+        }
+        if (token.refreshToken) {
+          (session as { refreshToken?: string }).refreshToken = token.refreshToken;
+        }
       }
       return session;
     },

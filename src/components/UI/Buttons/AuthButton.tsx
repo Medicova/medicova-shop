@@ -1,6 +1,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { User2, LogOut, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../Modals/DynamicModal";
@@ -13,6 +14,7 @@ import Image from "next/image";
 
 const AuthButton = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -137,9 +139,10 @@ const AuthButton = () => {
 
               <div className="my-1 border-t border-gray-100/50"></div>
               <motion.button
-                onClick={() => {
-                  signOut({ redirect: true, callbackUrl: "/" });
+                onClick={async () => {
                   setIsDropdownOpen(false);
+                  await signOut({ redirect: false });
+                  router.push("/");
                 }}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50/50"
                 whileHover={{ scale: 1.02 }}
