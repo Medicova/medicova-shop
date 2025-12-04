@@ -36,7 +36,7 @@ export const authOptions: AuthOptions = {
           }
 
           // Use the shared login API function
-          // This will use NEXTAUTH_URL to construct the API URL if BASE_URL is not set
+          // This will use BASE_URL environment variable or fallback to the default API URL
           console.log("Attempting login for email:", credentials.email);
           
           const data = await callLoginApi(credentials.email, credentials.password) as ApiLoginResponse;
