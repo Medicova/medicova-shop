@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { sidebarGroups } from "@/constants/sidebar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Power, ChevronDown, ChevronUp } from "lucide-react"; // Import ChevronDown and ChevronUp for collapse icons
 import { signOut } from "next-auth/react";
 import { isCurrentPage } from "@/util";
@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const Sidebar: React.FC<AccountPageProps> = ({ user }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { isArabic } = useLanguage();
 
@@ -149,7 +150,10 @@ const Sidebar: React.FC<AccountPageProps> = ({ user }) => {
 
         <div className="rounded-xl border-gray-300 bg-white p-2 lg:border lg:shadow-sm">
           <button
-            onClick={() => signOut({ redirect: true, callbackUrl: "/" })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              router.push("/");
+            }}
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-red-50"
           >
             <Power className="h-4 w-4" />

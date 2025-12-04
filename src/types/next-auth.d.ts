@@ -18,6 +18,11 @@ declare module "next-auth" {
     role: userType;
     phone?: string;
     image?: string;
+    accessToken?: string;
+    refreshToken?: string;
+    language?: string;
+    accessTokenExpires?: number;
+    tokenIssuedAt?: number;
   }
 }
 
@@ -25,5 +30,10 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
     role: userType;
+    accessToken?: string;
+    refreshToken?: string;
+    language?: string;
+    accessTokenExpires?: number; // Timestamp when access token expires
+    tokenIssuedAt?: number; // Timestamp when token was issued
   }
 }
