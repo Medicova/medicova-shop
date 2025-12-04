@@ -2,22 +2,20 @@
  * Shared login API function that calls the external authentication API
  */
 export async function callLoginApi(email: string, password: string) {
-  // Use BASE_URL from environment, or use NEXTAUTH_URL directly
+  // Use BASE_URL from environment for the backend API URL
+  // NEXTAUTH_URL is only for NextAuth callbacks, not for API requests
   let baseUrl = process.env.BASE_URL;
   
-  if (!baseUrl && process.env.NEXTAUTH_URL) {
-    // Use NEXTAUTH_URL directly - it should already be the API base URL
-    // Remove trailing slash if present
-    baseUrl = process.env.NEXTAUTH_URL.replace(/\/$/, "");
-    
-    // If NEXTAUTH_URL doesn't already contain /api/v1, append it
-    // This handles cases where NEXTAUTH_URL is just the domain
+  // Remove trailing slash if present
+  if (baseUrl) {
+    baseUrl = baseUrl.replace(/\/$/, "");
+    // Ensure BASE_URL includes /api/v1 if it doesn't already
     if (!baseUrl.includes("/api/v1")) {
       baseUrl = `${baseUrl}/api/v1`;
     }
   }
   
-  // Fallback to default external API
+  // Fallback to default external API if BASE_URL is not set
   if (!baseUrl) {
     baseUrl = "http://82.112.255.49/api/v1";
   }
@@ -26,7 +24,6 @@ export async function callLoginApi(email: string, password: string) {
   const loginUrl = `${cleanBaseUrl}/auth/login`;
 
   console.log("Calling login API:", loginUrl);
-  console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
   console.log("BASE_URL:", process.env.BASE_URL);
 
   const response = await fetch(loginUrl, {
