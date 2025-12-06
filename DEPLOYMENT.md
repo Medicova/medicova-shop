@@ -8,7 +8,7 @@ When deploying to `https://shop.medicova.net`, you need to set the following env
 
 ```bash
 # Backend API URL (the backend server)
-BASE_URL=http://82.112.255.49/api/v1
+BASE_URL=https://medicova.cloud/api/v1
 
 # NextAuth Configuration (your frontend URL)
 NEXTAUTH_URL=https://shop.medicova.net
@@ -32,7 +32,7 @@ NEXTAUTH_SECRET=your-secret-key-here
 
 ### 1. BASE_URL
 - This is your backend API server URL
-- Currently set to: `http://82.112.255.49/api/v1`
+- Currently set to: `https://medicova.cloud/api/v1`
 - **IMPORTANT**: If your backend server also has HTTPS, update this to use `https://` instead
 
 ### 2. NEXTAUTH_URL
@@ -52,12 +52,12 @@ NEXTAUTH_SECRET=your-secret-key-here
 **Possible Causes:**
 
 1. **Environment variables not set correctly**
-   - Check that `BASE_URL` is set to `http://82.112.255.49/api/v1`
+   - Check that `BASE_URL` is set to `https://medicova.cloud/api/v1`
    - Check that `NEXTAUTH_URL` is set to `https://shop.medicova.net`
    - Check that `NEXTAUTH_SECRET` is set
 
 2. **Backend server not accessible**
-   - Verify that `http://82.112.255.49/api/v1/auth/login` is accessible
+   - Verify that `https://medicova.cloud/api/v1/auth/login` is accessible
    - Check server logs for failed requests
    - Ensure backend allows requests from your hosting provider's IP
 
