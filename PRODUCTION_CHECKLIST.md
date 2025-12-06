@@ -5,7 +5,7 @@
 On your hosting platform (Vercel, Netlify, etc.), you **MUST** set these environment variables:
 
 ```bash
-BASE_URL=http://82.112.255.49/api/v1
+BASE_URL=https://medicova.cloud/api/v1
 NEXTAUTH_URL=https://shop.medicova.net
 NEXTAUTH_SECRET=<generate-a-random-32-character-string>
 ```
@@ -31,7 +31,7 @@ openssl rand -base64 32
    - If `NEXTAUTH_SECRET` is not set, session encryption fails
 
 2. **Network Connectivity**
-   - The server hosting your Next.js app needs to access `http://82.112.255.49`
+   - The server hosting your Next.js app needs to access `https://medicova.cloud`
    - Check if your hosting provider allows outgoing HTTP requests
    - Some platforms block non-HTTPS backend connections
 
@@ -44,14 +44,14 @@ openssl rand -base64 32
 
 ### 1. Check Environment Variables
 Log into your hosting platform and verify:
-- ✅ `BASE_URL` is set to `http://82.112.255.49/api/v1`
+- ✅ `BASE_URL` is set to `https://medicova.cloud/api/v1`
 - ✅ `NEXTAUTH_URL` is set to `https://shop.medicova.net`
 - ✅ `NEXTAUTH_SECRET` is set and is at least 32 characters
 
 ### 2. Test Backend Connectivity
 From your hosting platform's server logs or a test endpoint, verify:
 ```bash
-curl http://82.112.255.49/api/v1/auth/login
+curl https://medicova.cloud/api/v1/auth/login
 ```
 
 ### 3. Check Browser Console
@@ -105,7 +105,7 @@ Look for errors in your hosting platform's logs:
 If login still doesn't work after setting environment variables:
 1. Check server logs for specific error messages
 2. Verify backend server is accessible from the internet
-3. Test backend API directly: `curl -X POST http://82.112.255.49/api/v1/auth/login`
+3. Test backend API directly: `curl -X POST https://medicova.cloud/api/v1/auth/login`
 4. Contact your hosting provider support
 
 

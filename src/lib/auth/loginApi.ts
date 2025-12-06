@@ -17,7 +17,7 @@ export async function callLoginApi(email: string, password: string) {
   
   // Fallback to default external API if BASE_URL is not set
   if (!baseUrl) {
-    baseUrl = "http://82.112.255.49/api/v1";
+    baseUrl = "https://medicova.cloud/api/v1";
   }
   
   const cleanBaseUrl = baseUrl.replace(/\/$/, "");
