@@ -28,7 +28,7 @@ export default function SingleProductPage({
   const { language } = useLanguage();
   const foundProduct = products.find((p) => p.id === slug);
   if (!foundProduct) {
-    return NotFound;
+    return <NotFound />;
   }
   const tabs = [
     {
