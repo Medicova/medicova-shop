@@ -88,7 +88,9 @@ export const authOptions: AuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  // NEXTAUTH_URL is automatically used by NextAuth for callback URL generation
+  // Explicitly set NEXTAUTH_URL for callback URL generation
+  // This should be set to your production domain: https://shop.medicova.net
+  // NextAuth will automatically use this for generating callback URLs
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
